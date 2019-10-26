@@ -7,7 +7,7 @@ setup(
   author = "Asher Silvers",
   author_email = "ashersilvers@gmail.com",
   license='MIT',
-  url = 'https://github.com/asherAgs/amzSear', 
+  url = 'https://github.com/asherAgs/amzSear',
   keywords = 'amazon search product products python',
   classifiers = [],
   entry_points={
@@ -16,6 +16,6 @@ setup(
      ],
   },
   install_requires=[
-    'lxml==3.8',
+    'lxml>=3.8',
   ],
 )

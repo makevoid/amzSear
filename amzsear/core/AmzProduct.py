@@ -39,14 +39,15 @@ class AmzProduct(AmzBase):
     prices = None
     extra_attributes = None 
     subtext = None
+    release_date = None
 
     _all_attrs = ['title','product_url','image_url','rating','prices',
-        'extra_attributes', 'subtext']
+        'extra_attributes', 'subtext', 'release_date']
 
     def __init__(self, html_element=None):
-        if html_element != None:
+        if html_element is not None:
             html_dict = self._get_from_html(html_element)
-            for k,v in html_dict.items():
+            for k, v in html_dict.items():
                 setattr(self, k, v)
             if len(html_dict) > 0:
                 self._is_valid = True
@@ -57,31 +58,33 @@ class AmzProduct(AmzBase):
         Returns:
             dict: A dict of fields with extracted data
     """
-    @capture_exception(IndexError,default={})
+    @capture_exception(IndexError, default={})
     def _get_from_html(self, root):
         d = {}
 
-        title_root = [x for x in root.cssselect('a') if len(x.cssselect('h2')) > 0][0]
-        d['title'] = ''.join([x.text_content() for x in title_root.cssselect('h2')])
+        title_root = [x for x in root.cssselect('a.a-text-normal')][0]
+        d['title'] = ''.join([title.text_content() for title in title_root.cssselect('span[class="a-size-medium '
+                                                                                     'a-color-base a-text-normal"]')])
         d['product_url'] = build_url(title_root.get('href'))
         for elem in title_root.getparent().getparent().cssselect('div[class="a-row a-spacing-none"]'):
-            temp_subtext = ''.join([x.text_content() for x in elem.cssselect('span[class*="a-size-small"]')])
+            temp_subtext = ''.join([subtext.text_content() for subtext in elem.cssselect('span[class*="a-size-small"]')])
             if len(temp_subtext) > 0:
-                d['subtext'] = d.get('subtext',[]) + [temp_subtext]
-
-
+                d['subtext'] = d.get('subtext', []) + [temp_subtext]
+        d['release_date'] = ''.join([date.text_content() for date in root.cssselect('div.a-row.a-size-base.'
+                                                                                    'a-color-secondary > '
+                                                                                    'span.a-size-base.a-color-secondary'
+                                                                                    '.a-text-normal')] or "Nai Wa~")
         d['image_url'] = root.cssselect('img[src]')[0].get('src')
         d['rating'] = AmzRating(root) or None
-
         d['prices'] = {}
         price_names = root.cssselect('h3[data-attribute]')
         price_text = root.cssselect('span[class^="a"]')
         price_text = filter(lambda x: re.match('^[^a-z\-]+$',str(x.text)) and
-            re.search('[\.\,]',str(x.text)) and re.search('\d',str(x.text)), price_text)
+            re.search('[\.\,]',str(x.text)) and re.search('\d', str(x.text)), price_text)
 
         for i, el in enumerate(price_text):
             if i >= len(price_names):
-                price_key = str(len(d['prices'])) # defaults to a number if no name for price type
+                price_key = str(len(d['prices']))  # defaults to a number if no name for price type
             else:
                 price_key = price_names[i].text
             d['prices'][price_key] = el.text

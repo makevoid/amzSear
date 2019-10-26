@@ -1,20 +1,20 @@
 from lxml import html as html_module
-from lxml.html import clean
 from urllib import request
 
 try:
     from amzsear.core import build_url
     from amzsear.core.consts import URL_ADDONS, SEARCH_URL, DEFAULT_REGION
     from amzsear.core.AmzProduct import AmzProduct
-except ImportError:
+except ImportError as e:
     from .amzsear.core import build_url
     from .amzsear.core.consts import URL_ADDONS, SEARCH_URL, DEFAULT_REGION
     from .amzsear.core.AmzProduct import AmzProduct
-
 """
     The AmzSear object is similar to a Python dict, with each item having a
     unique index (Amazon search number) to reference each AmzProduct.
 """
+
+
 class AmzSear(object):
     _products = []
     _indexes = []
@@ -68,23 +68,23 @@ class AmzSear(object):
         self._indexes = []
         self._urls = []
 
-        if query != None:
+        if query is not None:
             page = get_iter(page)
             url = [build_url(query=query, page_num=p, region=region) for p in page]
-        if url != None:
+        if url is not None:
             url = get_iter(url)
             self._urls = url
             html = [request.urlopen(request.Request(build_url(u), **URL_ADDONS)).read() for u in url]
-        if html != None:
+        if html is not None:
             html = get_iter(html)
             html_element = [html_module.fromstring(h) for h in html]
-        if html_element != None:
+        if html_element is not None:
             html_element = get_iter(html_element)
             for html_el in html_element:
-                products = html_el.cssselect('li[id*="result_"]')
+                products = html_el.cssselect('div.s-result-list.s-search-results.sg-row > .s-result-item')
                 products = [x for x in products if x.cssselect('h2')]
                 products = [AmzProduct(elem) for elem in products]
-        if products != None:
+        if products is not None:
             products = get_iter(products)
             products = [prod for prod in products if prod.is_valid()]
             self._products += products
@@ -101,7 +101,6 @@ class AmzSear(object):
             out.append(temp_repr)
         out.append('<' + self.__class__.__name__ + ' object>')
         return '\n'.join(out)
-
 
     def __iter__(self):
         return iter(self._indexes)
@@ -140,7 +139,7 @@ class AmzSear(object):
     def get(self, key, default=None, raise_error=False):
         key = str(key)
         if key not in self._indexes:
-            if raise_error == True:
+            if raise_error:
                 raise KeyError('The key %s is not a know index' % (repr(key)) ) 
             else:
                 return default
@@ -165,7 +164,7 @@ class AmzSear(object):
             The AmzProduct at the relative index, otherwise the default value.
     """
     def rget(self, key, default=None, raise_error=False):
-        if raise_error == True:
+        if raise_error:
             return self._products[key]
         else:
             try:
@@ -201,7 +200,7 @@ class AmzSear(object):
             for index, prod in self.items():
                 if hasattr(prod, k):
                     curr_out.append(getattr(prod, k))
-                elif raise_error == True:
+                elif raise_error:
                     raise ValueError('The key %s is not available at index %s' % (repr(k), repr(index)) )
                 else:
                     curr_out.append(default)
