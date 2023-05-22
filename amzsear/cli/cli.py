@@ -76,7 +76,8 @@ def print_csv(cls):
     writer.writerows(data)
 
 def print_json(cls):
-    print(json.dumps({k: v.to_dict() for k,v in cls.items()}))
+    print(json.dumps({k+1: value.to_dict()
+      for k, (key, value) in enumerate(cls.items())}))
 
 def print_verbose(cls):
     print(cls)
